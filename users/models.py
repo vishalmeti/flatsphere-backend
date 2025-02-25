@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+import uuid
 
 class User(AbstractUser):
     """
@@ -17,6 +18,12 @@ class User(AbstractUser):
         ADMIN = 'admin', _('Admin')
     
     # Fields
+    user_id = models.UUIDField(
+        primary_key=True,
+        editable=False,
+        db_column='user_id',
+        default=uuid.uuid4,
+    )
     role = models.CharField(
         max_length=10,
         choices=Role.choices,
@@ -53,6 +60,9 @@ class User(AbstractUser):
     def __str__(self):
         return f"{self.username} ({self.get_role_display()})"
 
+    @property
+    def id(self):
+        return self.user_id
     class Meta:
         verbose_name = _('User')
         verbose_name_plural = _('Users')
