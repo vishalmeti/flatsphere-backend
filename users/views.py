@@ -1,3 +1,104 @@
 from django.shortcuts import render
+from rest_framework import viewsets, status
+from rest_framework.response import Response
+from rest_framework.decorators import action
+from .models import User
+from .serializers import UserSerializer
+from rest_framework.permissions import IsAuthenticated
+# from rest_framework_simplejwt.authentication import JWTAuthentication
+from .authentication import CustomJWTAuthentication
+from django.contrib.auth.hashers import make_password
+
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    authentication_classes = [CustomJWTAuthentication]  # Enforce JWT authentication
+    permission_classes = [IsAuthenticated]  # Restrict access to authenticated users
+
+    @action(detail=False, methods=['get'])
+    def list(self, request):
+        serializer = UserSerializer(self.queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['post'])
+    def create_user(self, request):
+        data = request.data
+        if not isinstance(data["users"], list):
+            return Response({"error": "Expected a list of users credentials"}, status=status.HTTP_400_BAD)
+        # for user_data in data["users"]:
+        #     user_data['password'] = make_password(user_data['password'])
+
+        serializer = UserSerializer(data=data["users"], many=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['put'])
+    def update_user(self, request, email=None):
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        serializer = UserSerializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['delete'])
+    def delete_user(self, request, email=None):
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        user.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, methods=['get'])
+    def retrieve_user(self, request, email=None):
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['put'])
+    def bulk_update_users(self, request, *args, **kwargs):
+        data = request.data
+        if not isinstance(data, list):
+            return Response({"error": "Expected a list of user data"}, status=status.HTTP_400_BAD_REQUEST)
+
+        updated_users = []
+        for user_data in data:
+            try:
+                user = User.objects.get(pk=user_data.get('user_id'))
+                serializer = UserSerializer(user, data=user_data, partial=True)
+                if serializer.is_valid():
+                    serializer.save()
+                    updated_users.append(serializer.data)
+                else:
+                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            except User.DoesNotExist:
+                return Response({"error": f"User with id {user_data.get('id')} not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response(updated_users, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['delete'])
+    def bulk_delete_users(self, request, *args, **kwargs):
+        ids = request.data.get('ids', [])
+        if not isinstance(ids, list):
+            return Response({"error": "Expected a list of user IDs"}, status=status.HTTP_400_BAD_REQUEST)
+
+        users_to_delete = User.objects.filter(id__in=ids)
+        if users_to_delete.count() != len(ids):
+            return Response({"error": "One or more users not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        users_to_delete.delete()
+        return Response({"message": "Bulk delete successful"}, status=status.HTTP_204_NO_CONTENT)
 
 # Create your views here.
