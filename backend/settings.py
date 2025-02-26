@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from datetime import timedelta
 from pathlib import Path
+import os
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure--mmrb(p8yzinxt#=pa9tj+_h$l!54*ppnj4_&ncb-8+)nhlzun'
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -80,18 +82,16 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+DATABASE_URL = config('DATABASE_URL')
+
 DATABASES = {
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.sqlite3',
-    #     'NAME': BASE_DIR / 'db.sqlite3',
-    # }
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'local_dev',
-        'USER': 'vishalmeti',
-        'PASSWORD': 'postgres',
-        'HOST': 'localhost',  # Use 'localhost' if running locally
-        'PORT': '5432',  # Default PostgreSQL port
+        'NAME': DATABASE_URL.split('/')[-1],
+        'USER': DATABASE_URL.split('://')[1].split(':')[0],
+        'PASSWORD': DATABASE_URL.split('://')[1].split(':')[1].split('@')[0],
+        'HOST': DATABASE_URL.split('@')[1].split(':')[0],
+        'PORT': DATABASE_URL.split(':')[-1].split('/')[0],
     }
 }
 
@@ -156,4 +156,18 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'TOKEN_OBTAIN_SERIALIZER': 'users.serializers.CustomTokenObtainPairSerializer',
 }
+
+# AWS S3 Configuration
+AWS_ACCESS_KEY_ID = config('AWS_ACCESS_KEY_ID')  # Your AWS access key
+AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY')  # Your AWS secret key
+AWS_STORAGE_BUCKET_NAME = config('AWS_STORAGE_BUCKET_NAME')  # Your S3 bucket name
+AWS_STORAGE_BUCKET_NAME_PROFILES = config('AWS_STORAGE_BUCKET_NAME_PROFILES')  # Your S3 bucket name
+AWS_S3_REGION_NAME = config('AWS_S3_REGION_NAME', default='eu-north-1')  # Your bucket region
+# AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'  # Optional: Custom domain for files
+
+# File Storage Settings
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
+# Optional: Set permissions for uploaded files
+AWS_QUERYSTRING_AUTH = False  # Don't add authentication parameters to URLs
 

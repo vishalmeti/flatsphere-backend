@@ -5,9 +5,21 @@ from rest_framework.decorators import action
 from .models import User
 from .serializers import UserSerializer
 from rest_framework.permissions import IsAuthenticated
+from decouple import config
 # from rest_framework_simplejwt.authentication import JWTAuthentication
 from .authentication import CustomJWTAuthentication
 from django.contrib.auth.hashers import make_password
+
+import boto3
+from botocore.exceptions import NoCredentialsError
+
+from .helpers import upload_to_s3  # Import the helper function
+
+    # views.py
+
+from django.shortcuts import render, redirect
+from django.core.files.storage import default_storage
+from django.conf import settings
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -101,4 +113,35 @@ class UserViewSet(viewsets.ModelViewSet):
         users_to_delete.delete()
         return Response({"message": "Bulk delete successful"}, status=status.HTTP_204_NO_CONTENT)
 
+
+class FileUploadView(viewsets.ModelViewSet):
+    authentication_classes = [CustomJWTAuthentication]  # Enforce JWT authentication
+    permission_classes = [IsAuthenticated]
+
+
+    def upload_file(self, request, *args, **kwargs):
+        
+        if 'file' not in request.data:
+            return Response(
+                {'error': 'No file uploaded'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Get the uploaded file from request.data
+        file = request.data['file']
+
+        # Ensure the file name is a string
+        file_name = file.name
+
+        # Save the file to the server
+        file_url, message = upload_to_s3(file_name, file, config('AWS_STORAGE_BUCKET_NAME_PROFILES'))
+        if file_url:
+            return Response({'message': message, 'file_url': file_url}, status=status.HTTP_201_CREATED)
+        else:
+            return Response({'error': message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
 # Create your views here.
+
+
+

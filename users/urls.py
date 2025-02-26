@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework import routers
-from .views import UserViewSet
+from .views import UserViewSet,FileUploadView
 
 # ...existing code...
 router = routers.SimpleRouter()
@@ -18,4 +18,9 @@ urlpatterns = [
         'patch': 'update_user',
         'delete': 'delete_user'
     })),
+    path('upload/', FileUploadView.as_view({
+        'post': 'upload_file'
+    })),
+
+
 ]
