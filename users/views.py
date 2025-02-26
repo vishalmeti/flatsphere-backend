@@ -136,6 +136,9 @@ class FileUploadView(viewsets.ModelViewSet):
         # Save the file to the server
         file_url, message = upload_to_s3(file_name, file, config('AWS_STORAGE_BUCKET_NAME_PROFILES'))
         if file_url:
+            user = request.user
+            user.profile_image = file_url
+            user.save()
             return Response({'message': message, 'file_url': file_url}, status=status.HTTP_201_CREATED)
         else:
             return Response({'error': message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

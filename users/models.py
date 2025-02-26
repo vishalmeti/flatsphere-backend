@@ -54,6 +54,13 @@ class User(AbstractUser):
         help_text=_('Specific permissions for this user.'),
         verbose_name=_('user permissions')
     )
+    profile_image = models.CharField(
+        max_length=255,  # Store the S3 URL
+        blank=True,
+        null=True,
+        verbose_name=_('Profile Image')
+    )
+
 
 
 

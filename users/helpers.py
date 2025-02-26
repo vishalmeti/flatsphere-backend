@@ -14,6 +14,6 @@ def upload_to_s3(file_name, file, bucket_name):
         file_url = f"https://{bucket_name}.s3.amazonaws.com/{file_name}"
         return file_url, "File uploaded successfully"
     except NoCredentialsError:
-        return None, "Credentials not available"
+        return False, "Credentials not available"
     except Exception as e:
-        return None, str(e)
+        return False, str(e)
