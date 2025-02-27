@@ -7,6 +7,7 @@ from .serializers import UserSerializer
 from rest_framework.permissions import IsAuthenticated
 from decouple import config
 # from rest_framework_simplejwt.authentication import JWTAuthentication
+from django.core.exceptions import ValidationError
 from .authentication import CustomJWTAuthentication
 from django.contrib.auth.hashers import make_password
 
@@ -15,7 +16,7 @@ from botocore.exceptions import NoCredentialsError
 
 from .helpers import upload_to_s3  # Import the helper function
 
-    # views.py
+# views.py
 
 from django.shortcuts import render, redirect
 from django.core.files.storage import default_storage
@@ -118,9 +119,15 @@ class FileUploadView(viewsets.ModelViewSet):
     authentication_classes = [CustomJWTAuthentication]  # Enforce JWT authentication
     permission_classes = [IsAuthenticated]
 
+    def validate_image(self, file):
+        valid_mime_types = ["image/jpeg", "image/png", "image/gif"]
+        if file.content_type not in valid_mime_types:
+            raise ValidationError(
+                "Unsupported file type. Only JPEG, PNG, and GIF are allowed."
+            )
 
     def upload_file(self, request, *args, **kwargs):
-        
+
         if 'file' not in request.data:
             return Response(
                 {'error': 'No file uploaded'}, 
@@ -129,22 +136,33 @@ class FileUploadView(viewsets.ModelViewSet):
 
         # Get the uploaded file from request.data
         file = request.data['file']
-
+        # Validate the file type
+        try:
+            self.validate_image(file)
+        except ValidationError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         # Ensure the file name is a string
-        file_name = file.name
+        try:
+            file_name = file.name
 
-        # Save the file to the server
-        file_url, message = upload_to_s3(file_name, file, config('AWS_STORAGE_BUCKET_NAME_PROFILES'))
-        if file_url:
-            user = request.user
-            user.profile_image = file_url
-            user.save()
-            return Response({'message': message, 'file_url': file_url}, status=status.HTTP_201_CREATED)
+            # Save the file to the server
+            file_url, message = upload_to_s3(
+                file_name, file, config("AWS_STORAGE_BUCKET_NAME")
+            )
+            if file_url:
+                user = request.user
+                user.profile_image = file_url
+                user.save()
+                return Response(
+                    {"message": message, "file_url": file_url},
+                    status=status.HTTP_201_CREATED,
+                )
+        except Exception as e:
+            return Response(
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
         else:
             return Response({'error': message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+
 
 # Create your views here.
-
-
-

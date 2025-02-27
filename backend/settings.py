@@ -160,14 +160,15 @@ SIMPLE_JWT = {
 # AWS S3 Configuration
 AWS_ACCESS_KEY_ID = config('AWS_ACCESS_KEY_ID')  # Your AWS access key
 AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY')  # Your AWS secret key
-AWS_STORAGE_BUCKET_NAME = config('AWS_STORAGE_BUCKET_NAME')  # Your S3 bucket name
-AWS_STORAGE_BUCKET_NAME_PROFILES = config('AWS_STORAGE_BUCKET_NAME_PROFILES')  # Your S3 bucket name
+AWS_STORAGE_BUCKET_NAME = config("AWS_STORAGE_BUCKET_NAME")  # Your S3 bucket name
 AWS_S3_REGION_NAME = config('AWS_S3_REGION_NAME', default='eu-north-1')  # Your bucket region
 # AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'  # Optional: Custom domain for files
 
 # File Storage Settings
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10 MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10 MB
+
 # Optional: Set permissions for uploaded files
 AWS_QUERYSTRING_AUTH = False  # Don't add authentication parameters to URLs
-
