@@ -10,20 +10,19 @@ class User(AbstractUser):
     - phone: User's phone number
     - workspace: ForeignKey to the Workspace model
     """
-    
+
     # Roles for the user
     class Role(models.TextChoices):
         OWNER = 'owner', _('Owner')
         RESIDENT = 'resident', _('Resident')
         ADMIN = 'admin', _('Admin')
-    
+
     # Fields
-    user_id = models.UUIDField(
-        primary_key=True,
-        editable=False,
-        db_column='user_id',
-        default=uuid.uuid4,
-    )
+    # Auto-incrementing integer primary key (this is correct!)
+    id = models.AutoField(primary_key=True)
+    # Short, custom ID (for display/user-facing purposes)
+    custom_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    # Remove the old id (UUIDField)
     role = models.CharField(
         max_length=10,
         choices=Role.choices,
@@ -61,15 +60,9 @@ class User(AbstractUser):
         verbose_name=_('Profile Image')
     )
 
-
-
-
     def __str__(self):
         return f"{self.username} ({self.get_role_display()})"
 
-    @property
-    def id(self):
-        return self.user_id
     class Meta:
         verbose_name = _('User')
         verbose_name_plural = _('Users')

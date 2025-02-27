@@ -5,6 +5,9 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.contrib.auth.hashers import make_password
 
+from .helpers import S3Helper
+from decouple import config
+
 User = get_user_model()
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -50,18 +53,19 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
-        token['user_id'] = str(user.user_id)  # Convert UUID to string
+        token["id"] = str(user.id)  # Convert UUID to string
         return token
 
-# Added the above class bcz we changed the pk of our usr model to user_id, but the default token serializer uses id as the pk
-# So we need to override the default token serializer to use user_id instead of id
+# Added the above class bcz we changed the pk of our usr model to id, but the default token serializer uses id as the pk
+# So we need to override the default token serializer to use id instead of id
 # we now mentioned this class in the settings.py file
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            "user_id",
+            "id",
+            "custom_id",
             "username",
             "email",
             "password",
@@ -70,6 +74,7 @@ class UserSerializer(serializers.ModelSerializer):
             "phone",
             "last_login",
             "profile_image",
+            "profile_image_url",
             "date_joined",
             "first_name",
             "last_name",
@@ -80,6 +85,7 @@ class UserSerializer(serializers.ModelSerializer):
         }
 
     full_name = serializers.SerializerMethodField()
+    profile_image_url = serializers.SerializerMethodField()
 
     def create(self, validated_data):
         # Hash the password before saving the user
@@ -93,3 +99,10 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_full_name(self, obj):
         return f"{obj.first_name} {obj.last_name}"
+
+    def get_profile_image_url(self, obj):
+        if obj.profile_image:
+            return S3Helper().get_presigned_url(
+                obj.profile_image, config("AWS_STORAGE_BUCKET_NAME")
+            )
+        return None

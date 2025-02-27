@@ -34,17 +34,16 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-
-    'rest_framework',  # Django REST framework
-    'corsheaders',  # Django CORS headers
-    'users',  # USERS app
-
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "rest_framework",  # Django REST framework
+    "corsheaders",  # Django CORS headers
+    "users",  # USERS app
+    "workspaces",  # WORKSPACES app
 ]
 
 MIDDLEWARE = [

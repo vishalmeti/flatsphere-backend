@@ -14,7 +14,7 @@ from django.contrib.auth.hashers import make_password
 import boto3
 from botocore.exceptions import NoCredentialsError
 
-from .helpers import upload_to_s3  # Import the helper function
+from .helpers import S3Helper  # Import the helper function
 
 # views.py
 
@@ -89,7 +89,7 @@ class UserViewSet(viewsets.ModelViewSet):
         updated_users = []
         for user_data in data:
             try:
-                user = User.objects.get(pk=user_data.get('user_id'))
+                user = User.objects.get(pk=user_data.get("id"))
                 serializer = UserSerializer(user, data=user_data, partial=True)
                 if serializer.is_valid():
                     serializer.save()
@@ -127,7 +127,6 @@ class FileUploadView(viewsets.ModelViewSet):
             )
 
     def upload_file(self, request, *args, **kwargs):
-
         if 'file' not in request.data:
             return Response(
                 {'error': 'No file uploaded'}, 
@@ -149,7 +148,7 @@ class FileUploadView(viewsets.ModelViewSet):
             )
 
             # Save the file to the server
-            file_url, message = upload_to_s3(
+            file_url, message = S3Helper().upload_to_s3(
                 file_name, file, config("AWS_STORAGE_BUCKET_NAME")
             )
             if file_url:
