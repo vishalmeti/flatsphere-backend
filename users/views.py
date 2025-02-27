@@ -143,7 +143,10 @@ class FileUploadView(viewsets.ModelViewSet):
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         # Ensure the file name is a string
         try:
-            file_name = file.name
+            file_extension = file.name.split(".")[-1]
+            file_name = (
+                "profiles/" + request.user.username + "_profile." + file_extension
+            )
 
             # Save the file to the server
             file_url, message = upload_to_s3(
