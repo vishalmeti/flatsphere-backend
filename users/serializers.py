@@ -40,7 +40,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
                 user = User.objects.get(email=credentials['email'])
             else:
                 user = User.objects.get(username=credentials['username'])
-            
+
             if user.check_password(credentials['password']):
                 return user
         except User.DoesNotExist:
@@ -56,21 +56,40 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 # Added the above class bcz we changed the pk of our usr model to user_id, but the default token serializer uses id as the pk
 # So we need to override the default token serializer to use user_id instead of id
 # we now mentioned this class in the settings.py file
-    
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['user_id', 'username', 'email', 'password']
+        fields = [
+            "user_id",
+            "username",
+            "email",
+            "password",
+            "is_active",
+            "role",
+            "phone",
+            "last_login",
+            "profile_image",
+            "date_joined",
+            "first_name",
+            "last_name",
+            "full_name",
+        ]
         extra_kwargs = {
             'password': {'write_only': True}  # Ensure password is write-only
         }
+
+    full_name = serializers.SerializerMethodField()
 
     def create(self, validated_data):
         # Hash the password before saving the user
         validated_data['password'] = make_password(validated_data['password'])
         return super().create(validated_data)
-    
+
     def update(self, instance, validated_data):
         if 'password' in validated_data:
             validated_data['password'] = make_password(validated_data['password'])
         return super().update(instance, validated_data)
+
+    def get_full_name(self, obj):
+        return f"{obj.first_name} {obj.last_name}"
