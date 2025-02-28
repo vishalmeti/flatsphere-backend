@@ -37,8 +37,8 @@ class UserWorkspaceSerializer(serializers.ModelSerializer):
         """
         Check that the user-workspace combination is unique.
         """
-        user = data["user"]
-        workspace = data["workspace"]
+        user = data.get("user")
+        workspace = data.get("workspace")
 
         if UserWorkspace.objects.filter(user=user, workspace=workspace).exists():
             raise serializers.ValidationError(

@@ -78,7 +78,10 @@ class WorkspaceViewSet(
                 user=request.user, workspace=workspace
             ).exists()
         ):
-            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "No workspaces assigned to you"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         serializer = self.get_serializer(workspace)
         return Response(serializer.data)
@@ -102,7 +105,10 @@ class WorkspaceViewSet(
         workspace = get_object_or_404(Workspace, pk=pk)
         # Check if user has access to the workspace
         if not (workspace.owner == request.user):
-            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "You donot have permission to perform this action"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         self.perform_destroy(workspace)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -212,7 +218,13 @@ class UserWorkspaceViewSet(
         ):
             return Response({"detail": "You do not have permission to update this."})
 
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        # payload = [{**data, "workspace": workspace} for data in request.data]
+
+        serializer = self.get_serializer(
+            instance,
+            data=request.data,
+            partial=True,
+        )
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         return Response(serializer.data)
