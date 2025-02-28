@@ -9,6 +9,7 @@ from .serializers import (
 )
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from django.shortcuts import get_object_or_404
+from workspaces.permissions import IsWorkspaceOwner
 
 
 class WorkspaceViewSet(
@@ -25,8 +26,22 @@ class WorkspaceViewSet(
     permission_classes = [IsAuthenticated]
 
     def get_permissions(self):
+        print("action", self.action)
         if self.action == "create_workspace":
-            permission_classes = [IsAdminUser]
+            permission_classes = [IsAdminUser]  # Only admins create workspaces
+        elif self.action in [
+            "list_workspace",
+            "retrieve_workspace",
+            "update_workspace",
+            "delete_workspace",
+            "partial_update_workspace",
+            "destroy_workspace",
+        ]:
+            permission_classes = [
+                IsAuthenticated,
+                IsWorkspaceOwner,
+            ]  # Example: Owner only
+        # Add more conditions for other actions as needed
         else:
             permission_classes = [IsAuthenticated]
         return [permission() for permission in permission_classes]
