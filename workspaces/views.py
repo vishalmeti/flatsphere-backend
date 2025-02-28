@@ -10,6 +10,8 @@ from .serializers import (
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from django.shortcuts import get_object_or_404
 from workspaces.permissions import IsWorkspaceOwner
+from workspaces.permissions import IsWorkspaceMember
+from workspaces.permissions import IsOwnerOrAdmin
 
 
 class WorkspaceViewSet(
@@ -31,17 +33,19 @@ class WorkspaceViewSet(
             permission_classes = [IsAdminUser]  # Only admins create workspaces
         elif self.action in [
             "list_workspace",
-            "retrieve_workspace",
             "update_workspace",
             "delete_workspace",
-            "partial_update_workspace",
-            "destroy_workspace",
         ]:
             permission_classes = [
                 IsAuthenticated,
                 IsWorkspaceOwner,
             ]  # Example: Owner only
         # Add more conditions for other actions as needed
+        elif self.action in ["retrieve_workspace"]:
+            permission_classes = [
+                IsAuthenticated,
+                #   IsWorkspaceMember
+            ]
         else:
             permission_classes = [IsAuthenticated]
         return [permission() for permission in permission_classes]
@@ -82,13 +86,13 @@ class WorkspaceViewSet(
     def update_workspace(self, request, pk=None, *args, **kwargs):
         workspace = get_object_or_404(Workspace, pk=pk)
         # Check if user has access to the workspace
-        if not (
-            workspace.owner == request.user
-            or UserWorkspace.objects.filter(
-                user=request.user, workspace=workspace, role="admin"
-            ).exists()
-        ):
-            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+        # if not (
+        #     workspace.owner == request.user
+        #     or UserWorkspace.objects.filter(
+        #         user=request.user, workspace=workspace, role="admin"
+        #     ).exists()
+        # ):
+        #     return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
         serializer = self.get_serializer(workspace, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
@@ -118,13 +122,13 @@ class UserWorkspaceViewSet(
 
     def get_permissions(self):
         if self.action in ["list_user_workspaces", "retrieve_user_workspace"]:
-            permission_classes = [IsAuthenticated]
+            permission_classes = [IsAuthenticated, IsWorkspaceMember]
         elif self.action in [
             "create_user_workspace",
             "update_user_workspace",
             "delete_user_workspace",
         ]:
-            permission_classes = [IsAuthenticated]
+            permission_classes = [IsAuthenticated, IsOwnerOrAdmin]
         else:
             permission_classes = [IsAuthenticated]
         return [permission() for permission in permission_classes]

@@ -47,17 +47,11 @@ class User(AbstractUser):
         verbose_name=_('groups')
     )
     user_permissions = models.ManyToManyField(
-        'auth.Permission',
-        related_name='custom_user_permissions_set',  # Add related_name here
+        "auth.Permission",
+        related_name="custom_user_permissions_set",  # Add related_name here
         blank=True,
-        help_text=_('Specific permissions for this user.'),
-        verbose_name=_('user permissions')
-    )
-    profile_image = models.CharField(
-        max_length=255,  # Store the S3 URL
-        blank=True,
-        null=True,
-        verbose_name=_('Profile Image')
+        help_text=_("Specific permissions for this user."),
+        verbose_name=_("user permissions"),
     )
 
     def __str__(self):

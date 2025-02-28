@@ -4,8 +4,10 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.contrib.auth.hashers import make_password
+from media.models import Document
+from django.contrib.contenttypes.models import ContentType
 
-from .helpers import S3Helper
+from media.helpers import S3Helper
 from decouple import config
 
 User = get_user_model()
@@ -101,8 +103,16 @@ class UserSerializer(serializers.ModelSerializer):
         return f"{obj.first_name} {obj.last_name}"
 
     def get_profile_image_url(self, obj):
-        if obj.profile_image:
-            return S3Helper().get_presigned_url(
-                obj.profile_image, config("AWS_STORAGE_BUCKET_NAME")
+        contentType = ContentType.objects.get_for_model(obj)
+        document = (
+            Document.objects.filter(
+                object_type=contentType, object_id=obj.id, is_profile_image=True
             )
+            .order_by("-uploaded_on")
+            .first()
+        )
+
+        if document:
+            return S3Helper().get_presigned_url(document.s3_key)
+
         return None

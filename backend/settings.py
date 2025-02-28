@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "corsheaders",  # Django CORS headers
     "users",  # USERS app
     "workspaces",  # WORKSPACES app
+    "media",  # MEDIA app
 ]
 
 MIDDLEWARE = [
@@ -151,9 +152,9 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-    'TOKEN_OBTAIN_SERIALIZER': 'users.serializers.CustomTokenObtainPairSerializer',
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=180),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "TOKEN_OBTAIN_SERIALIZER": "users.serializers.CustomTokenObtainPairSerializer",
 }
 
 # AWS S3 Configuration
