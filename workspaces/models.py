@@ -24,7 +24,7 @@ class Workspace(models.Model):
 
 class UserWorkspace(models.Model):
     ROLE_CHOICES = (
-        ("owner", "Owner"),
+        # ("owner", "Owner"),
         ("resident", "Resident"),
         ("admin", "Admin"),
     )
@@ -63,3 +63,28 @@ class ApartmentUnit(models.Model):
 
     def __str__(self):
         return f"{self.workspace.name} - Unit {self.unit_number}"
+
+
+class UserApartment(models.Model):  # Renamed class
+    ROLE_CHOICES = (
+        ("owner", "Owner"),
+        ("tenant", "Tenant"),
+    )
+
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="user_apartments"
+    )  # Updated related_name
+    unit = models.ForeignKey(
+        ApartmentUnit, on_delete=models.CASCADE, related_name="apartment_users"
+    )  # Updated related_name
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="tenant")
+    is_primary_resident = models.BooleanField(default=True)
+    lease_start_date = models.DateField(null=True, blank=True)
+    lease_end_date = models.DateField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ("user", "unit")
+        db_table = "UserApartmentUnit"  # Keep this as the desired table name
+
+    def __str__(self):
+        return f"{self.user.custom_id} - {self.unit.workspace.name} - {self.unit.unit_number}"

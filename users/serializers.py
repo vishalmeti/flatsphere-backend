@@ -75,7 +75,6 @@ class UserSerializer(serializers.ModelSerializer):
             "role",
             "phone",
             "last_login",
-            "profile_image",
             "profile_image_url",
             "date_joined",
             "first_name",

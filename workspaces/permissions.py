@@ -59,15 +59,7 @@ class IsOwnerOrAdmin(permissions.BasePermission):
 
         workspace = get_object_or_404(Workspace, pk=workspace_id)
         # Check if user is workspace owner or admin.
-        print(
-            "DDDDDD",
-            (
-                workspace.owner == request.user
-                or UserWorkspace.objects.filter(
-                    user=request.user, workspace=workspace, role="admin"
-                ).exists()
-            ),
-        )
+
         return (
             workspace.owner == request.user
             or UserWorkspace.objects.filter(

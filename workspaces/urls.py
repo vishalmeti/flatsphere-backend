@@ -60,4 +60,26 @@ urlpatterns = [
             }
         ),
     ),
+    # UserApartment URLs
+    path(
+        "<int:workspace_id>/units/<int:unit_id>/users/",
+        views.UserApartmentViewSet.as_view(
+            {
+                "get": "list_user_apartments",
+                "post": "create_user_apartment",
+                "delete": "delete_user_apartment",
+            }
+        ),
+    ),
+    # path(
+    #     "<int:workspace_id>/units/<int:unit_id>/users/<int:pk>/",
+    #     views.UserApartmentViewSet.as_view(
+    #         {
+    #             # "get": "retrieve_user_apartment",
+    #             # "put": "update_user_apartment",
+    #             # "patch": "partial_update_user_apartment",
+    #             # "delete": "delete_user_apartment",
+    #         }
+    #     ),
+    # ),
 ]

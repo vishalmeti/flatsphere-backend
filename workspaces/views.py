@@ -1,8 +1,13 @@
 # workspaces/views.py
 from rest_framework import viewsets, status, mixins
 from rest_framework.response import Response
-from .models import Workspace, UserWorkspace, ApartmentUnit
+from rest_framework.decorators import action
+
+from users.models import User
+
+from .models import UserApartment, Workspace, UserWorkspace, ApartmentUnit
 from .serializers import (
+    UserApartmentSerializer,
     WorkspaceSerializer,
     UserWorkspaceSerializer,
     ApartmentUnitSerializer,
@@ -62,7 +67,7 @@ class WorkspaceViewSet(
         serializer.is_valid(raise_exception=True)
         workspace = serializer.save()
         UserWorkspace.objects.create(
-            user=request.user, workspace=workspace, role="owner"
+            user=request.user, workspace=workspace, role="admin"
         )
         headers = self.get_success_headers(serializer.data)
         return Response(
@@ -363,3 +368,197 @@ class ApartmentUnitViewSet(
 
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class UserApartmentViewSet(
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
+
+    queryset = UserApartment.objects.all()
+    serializer_class = UserApartmentSerializer
+    permission_classes = [IsAuthenticated]  # Basic permission
+
+    def get_permissions(self):
+        if self.action in ["list_user_apartments", "retrieve_user_apartment"]:
+            permission_classes = [
+                IsAuthenticated,
+                IsWorkspaceMember,
+            ]  # All members can see
+        elif self.action in [
+            "create_user_apartment",
+            "update_user_apartment",
+            "partial_update_user_apartment",
+            "delete_user_apartment",
+        ]:
+            permission_classes = [
+                IsAuthenticated,
+                IsOwnerOrAdmin,
+            ]  # Only admin and owner can create
+        else:
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        workspace_id = self.kwargs.get("workspace_id")
+        unit_id = self.kwargs.get("unit_id")
+
+        if not workspace_id:
+            return UserApartment.objects.none()  # Must have a workspace
+
+        # Get Workspace and check permissions
+        workspace = get_object_or_404(Workspace, pk=workspace_id)
+        if not (
+            self.request.user.is_superuser
+            or UserWorkspace.objects.filter(
+                user=self.request.user, workspace=workspace
+            ).exists()
+        ):
+            return UserApartment.objects.none()  # User not in workspace
+
+        # Filter by workspace
+        queryset = queryset.filter(unit__workspace_id=workspace_id)
+
+        # Further filter by unit_id if provided
+        if unit_id:
+            queryset = queryset.filter(unit_id=unit_id)
+
+        # If not admin/owner, restrict to own records.
+        if not (
+            self.request.user.is_superuser
+            or Workspace.objects.filter(
+                pk=workspace_id, owner=self.request.user
+            ).exists()
+            or UserWorkspace.objects.filter(
+                user=self.request.user, workspace_id=workspace_id, role="admin"
+            ).exists()
+        ):
+            queryset = queryset.filter(user=self.request.user)
+
+        return queryset
+
+    def list_user_apartments(
+        self, request, workspace_id=None, unit_id=None, *args, **kwargs
+    ):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def create_user_apartment(
+        self, request, workspace_id=None, unit_id=None, *args, **kwargs
+    ):
+        # workspace and unit id validation.
+        workspace = get_object_or_404(Workspace, pk=workspace_id)
+        if not (
+            workspace.owner == self.request.user
+            or UserWorkspace.objects.filter(
+                user=self.request.user, workspace=workspace, role="admin"
+            ).exists()
+        ):
+            return Response(
+                {
+                    "detail": "You do not have permission to create user_apartment in this workspace."
+                }
+            )
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.validated_data["unit"] = get_object_or_404(
+            ApartmentUnit, pk=serializer.validated_data["unit"].id, workspace=workspace
+        )
+
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(
+            serializer.data, status=status.HTTP_201_CREATED, headers=headers
+        )
+
+    def perform_create(self, serializer):
+        serializer.save()
+
+    # def retrieve_user_apartment(
+    #     self, request, workspace_id=None, unit_id=None, pk=None, *args, **kwargs
+    # ):
+    #     instance = self.get_object()
+    #     serializer = self.get_serializer(instance)
+    #     return Response(serializer.data)
+
+    # def update_user_apartment(
+    #     self, request, workspace_id=None, unit_id=None, pk=None, *args, **kwargs
+    # ):
+    #     instance = self.get_object()
+    #     workspace = get_object_or_404(Workspace, pk=workspace_id)
+    #     if not (
+    #         workspace.owner == self.request.user
+    #         or UserWorkspace.objects.filter(
+    #             user=self.request.user, workspace=workspace, role="admin"
+    #         ).exists()
+    #     ):
+    #         return Response(
+    #             {"detail": "You do not have permission to update this user apartment."}
+    #         )
+    #     serializer = self.get_serializer(instance, data=request.data, partial=False)
+    #     serializer.is_valid(raise_exception=True)
+    #     serializer.validated_data["unit"] = get_object_or_404(
+    #         ApartmentUnit, pk=serializer.validated_data["unit"].id, workspace=workspace
+    #     )
+    #     self.perform_update(serializer)
+    #     return Response(serializer.data)
+
+    # def partial_update_user_apartment(
+    #     self, request, workspace_id=None, unit_id=None, pk=None, *args, **kwargs
+    # ):
+    #     instance = self.get_object()
+    #     workspace = get_object_or_404(Workspace, pk=workspace_id)
+    #     if not (
+    #         workspace.owner == self.request.user
+    #         or UserWorkspace.objects.filter(
+    #             user=self.request.user, workspace=workspace, role="admin"
+    #         ).exists()
+    #     ):
+    #         return Response(
+    #             {"detail": "You do not have permission to update this user apartment."}
+    #         )
+
+    #     serializer = self.get_serializer(instance, data=request.data, partial=True)
+    #     serializer.is_valid(raise_exception=True)
+    #     serializer.validated_data["unit"] = get_object_or_404(
+    #         ApartmentUnit, pk=serializer.validated_data["unit"].id, workspace=workspace
+    #     )
+    #     self.perform_update(serializer)
+    #     return Response(serializer.data)
+
+    # def perform_update(self, serializer):
+    #     serializer.save()
+
+    def delete_user_apartment(
+        self, request, workspace_id=None, unit_id=None, pk=None, *args, **kwargs
+    ):
+        workspace = get_object_or_404(Workspace, pk=workspace_id)
+        unit = request.data.get("unit")
+        user = request.data.get("user")
+
+        userInstance = get_object_or_404(User, pk=user)
+        unitInstance = get_object_or_404(ApartmentUnit, pk=unit)
+        if not (
+            workspace.owner == self.request.user
+            or UserWorkspace.objects.filter(
+                user=self.request.user, workspace=workspace, role="admin"
+            ).exists()
+        ):
+            return Response(
+                {
+                    "detail": "You do not have permission to delete this user from apartment."
+                }
+            )
+        instance = UserApartment.objects.get(user=userInstance, unit_id=unitInstance)
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def perform_destroy(self, instance):
+        instance.delete()

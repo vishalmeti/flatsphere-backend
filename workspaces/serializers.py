@@ -1,6 +1,6 @@
 # workspaces/serializers.py
 from rest_framework import serializers
-from .models import Workspace, UserWorkspace, ApartmentUnit
+from .models import Workspace, UserWorkspace, ApartmentUnit, UserApartment
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -56,3 +56,40 @@ class ApartmentUnitSerializer(serializers.ModelSerializer):
     class Meta:
         model = ApartmentUnit
         fields = "__all__"
+
+
+class UserApartmentSerializer(serializers.ModelSerializer):  # Renamed serializer
+    user_custom_id = serializers.CharField(source="user.custom_id", read_only=True)
+    unit_number = serializers.CharField(source="unit.unit_number", read_only=True)
+    workspace_name = serializers.CharField(source="unit.workspace.name", read_only=True)
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+    unit = serializers.PrimaryKeyRelatedField(queryset=ApartmentUnit.objects.all())
+
+    class Meta:
+        model = UserApartment
+        fields = "__all__"
+
+    def validate(self, data):
+        user = data.get("user")
+        unit = data.get("unit")
+
+        # Check if user is in the workspace
+        if not UserWorkspace.objects.filter(
+            user=user, workspace=unit.workspace
+        ).exists():
+            raise serializers.ValidationError(
+                "The user is not a member of the workspace."
+            )
+
+        # Primary resident check (Optional, keep if you want this functionality)
+        is_primary_resident = data.get("is_primary_resident", True)
+        if is_primary_resident:
+            existing_primary = UserApartment.objects.filter(
+                unit=unit, is_primary_resident=True
+            ).exclude(pk=self.instance.pk if self.instance else None)
+            if existing_primary.exists():
+                raise serializers.ValidationError(
+                    "There is already a primary resident for this unit."
+                )
+
+        return data
