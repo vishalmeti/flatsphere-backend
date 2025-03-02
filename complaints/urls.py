@@ -2,6 +2,35 @@
 from django.urls import path
 from . import views
 
+
+"""
+
+Resulting URL Structure:
+
+This configuration will result in the following URL structure:
+
+Complaints:
+
+GET /api/v1/complaints/workspaces/{workspace_id}/complaints/ (List)
+POST /api/v1/complaints/workspaces/{workspace_id}/complaints/ (Create)
+GET /api/v1/complaints/workspaces/{workspace_id}/complaints/{complaint_id}/ (Retrieve)
+PUT /api/v1/complaints/workspaces/{workspace_id}/complaints/{complaint_id}/ (Update)
+PATCH /api/v1/complaints/workspaces/{workspace_id}/complaints/{complaint_id}/ (Partial Update)
+DELETE /api/v1/complaints/workspaces/{workspace_id}/complaints/{complaint_id}/ (Delete)
+POST /api/v1/complaints/workspaces/{workspace_id}/complaints/{complaint_id}/resolve/ (Resolve)
+Complaint Messages:
+
+GET /api/v1/complaints/workspaces/{workspace_id}/complaints/{complaint_id}/messages/ (List - list_messages)
+POST /api/v1/complaints/workspaces/{workspace_id}/complaints/{complaint_id}/messages/ (Create -create_message)
+GET /api/v1/complaints/workspaces/{workspace_id}/complaints/{complaint_id}/messages/{message_id}/ (Retrieve, Update, Delete)
+PUT /api/v1/complaints/workspaces/{workspace_id}/complaints/{complaint_id}/messages/{message_id}/
+PATCH /api/v1/complaints/workspaces/{workspace_id}/complaints/{complaint_id}/messages/{message_id}/
+DELETE /api/v1/complaints/workspaces/{workspace_id}/complaints/{complaint_id}/messages/{message_id}/
+
+
+"""
+
+
 urlpatterns = [
     # Complaints (nested under workspaces)
     path(
