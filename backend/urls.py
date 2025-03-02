@@ -25,4 +25,5 @@ urlpatterns = [
     path("api/v1/upload/", include("media.urls")),
     path("api/v1/users/", include("users.urls")),
     path("api/v1/workspaces/", include("workspaces.urls")),
+    path("api/v1/complaints/", include("complaints.urls")),
 ]

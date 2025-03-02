@@ -3,36 +3,35 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    # Complaints
+    # Complaints (nested under workspaces)
     path(
-        "complaints/", views.ComplaintViewSet.as_view({"get": "list", "post": "create"})
+        "workspaces/<int:workspace_id>/complaints/",
+        views.ComplaintViewSet.as_view({"get": "list", "post": "create"}),
     ),
     path(
-        "complaints/<int:pk>/",
+        "workspaces/<int:workspace_id>/complaints/<int:pk>/",
         views.ComplaintViewSet.as_view(
             {
                 "get": "retrieve",
-                # "put": "update",
+                "put": "update",
                 "patch": "partial_update",
                 "delete": "destroy",
             }
         ),
     ),
     path(
-        "complaints/<int:pk>/resolve/",
-        views.ComplaintViewSet.as_view(
-            {"post": "resolve"}  # Custom action for resolving
-        ),
+        "workspaces/<int:workspace_id>/complaints/<int:pk>/resolve/",
+        views.ComplaintViewSet.as_view({"post": "resolve"}),
     ),
     # Complaint Messages (nested under complaints)
     path(
-        "complaints/<int:complaint_id>/messages/",
+        "workspaces/<int:workspace_id>/complaints/<int:complaint_id>/messages/",
         views.ComplaintMessageViewSet.as_view(
             {"get": "list_messages", "post": "create_message"}
         ),
     ),
     path(
-        "complaints/<int:complaint_id>/messages/<int:pk>/",
+        "workspaces/<int:workspace_id>/complaints/<int:complaint_id>/messages/<int:pk>/",
         views.ComplaintMessageViewSet.as_view(
             {
                 "get": "retrieve_message",
