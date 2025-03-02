@@ -114,6 +114,12 @@ class UserViewSet(viewsets.ModelViewSet):
         users_to_delete.delete()
         return Response({"message": "Bulk delete successful"}, status=status.HTTP_204_NO_CONTENT)
 
+    @action(detail=False, methods=["get"])
+    def current_user(self, request):
+        user = request.user
+        serializer = UserSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class FileUploadView(viewsets.ModelViewSet):
     authentication_classes = [CustomJWTAuthentication]  # Enforce JWT authentication
