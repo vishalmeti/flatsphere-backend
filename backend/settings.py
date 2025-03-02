@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "users",  # USERS app
     "workspaces",  # WORKSPACES app
     "media",  # MEDIA app
+    "complaints",  # COMPLAINTS app
 ]
 
 MIDDLEWARE = [
