@@ -37,7 +37,7 @@ class FileUploadView(viewsets.ModelViewSet):
         file = request.data.get("file")
         objectId = request.data.get("objectId")
         modelName = request.data.get("modelName")
-        isProfile = request.data.get("isProfile") or False
+        isProfile = request.data.get("isProfile") == "true"
 
         contentType = ContentType.objects.get(model=modelName)
 
