@@ -73,7 +73,14 @@ class FileUploadView(viewsets.ModelViewSet):
                 )
                 document.save()
 
-                user.save()
+                if isProfile:
+                    ## remove the previous profile image
+                    Document.objects.filter(
+                        object_id=objectId,
+                        object_type=contentType,
+                        is_profile_image=True,
+                    ).exclude(id=document.id).delete()
+
                 return Response(
                     {"message": message, "file_url": file_url},
                     status=status.HTTP_201_CREATED,

@@ -14,7 +14,7 @@ from django.contrib.auth.hashers import make_password
 import boto3
 from botocore.exceptions import NoCredentialsError
 
-from .helpers import S3Helper  # Import the helper function
+from media.helpers import S3Helper  # Import the helper function
 
 # views.py
 
@@ -121,56 +121,56 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class FileUploadView(viewsets.ModelViewSet):
-    authentication_classes = [CustomJWTAuthentication]  # Enforce JWT authentication
-    permission_classes = [IsAuthenticated]
+# class FileUploadView(viewsets.ModelViewSet):
+#     authentication_classes = [CustomJWTAuthentication]  # Enforce JWT authentication
+#     permission_classes = [IsAuthenticated]
 
-    def validate_image(self, file):
-        valid_mime_types = ["image/jpeg", "image/png", "image/gif"]
-        if file.content_type not in valid_mime_types:
-            raise ValidationError(
-                "Unsupported file type. Only JPEG, PNG, and GIF are allowed."
-            )
+#     def validate_image(self, file):
+#         valid_mime_types = ["image/jpeg", "image/png", "image/gif"]
+#         if file.content_type not in valid_mime_types:
+#             raise ValidationError(
+#                 "Unsupported file type. Only JPEG, PNG, and GIF are allowed."
+#             )
 
-    def upload_file(self, request, *args, **kwargs):
-        if 'file' not in request.data:
-            return Response(
-                {'error': 'No file uploaded'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
+#     def upload_file(self, request, *args, **kwargs):
+#         if 'file' not in request.data:
+#             return Response(
+#                 {'error': 'No file uploaded'},
+#                 status=status.HTTP_400_BAD_REQUEST
+#             )
 
-        # Get the uploaded file from request.data
-        file = request.data['file']
-        # Validate the file type
-        try:
-            self.validate_image(file)
-        except ValidationError as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        # Ensure the file name is a string
-        try:
-            file_extension = file.name.split(".")[-1]
-            file_name = (
-                "profiles/" + request.user.username + "_profile." + file_extension
-            )
+#         # Get the uploaded file from request.data
+#         file = request.data['file']
+#         # Validate the file type
+#         try:
+#             self.validate_image(file)
+#         except ValidationError as e:
+#             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+#         # Ensure the file name is a string
+#         try:
+#             file_extension = file.name.split(".")[-1]
+#             file_name = (
+#                 "profiles/" + request.user.username + "_profile." + file_extension
+#             )
 
-            # Save the file to the server
-            file_url, message = S3Helper().upload_to_s3(
-                file_name, file, config("AWS_STORAGE_BUCKET_NAME")
-            )
-            if file_url:
-                user = request.user
-                user.profile_image = file_url
-                user.save()
-                return Response(
-                    {"message": message, "file_url": file_url},
-                    status=status.HTTP_201_CREATED,
-                )
-        except Exception as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-        else:
-            return Response({'error': message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+#             # Save the file to the server
+#             file_url, message = S3Helper().upload_to_s3(
+#                 file_name, file, config("AWS_STORAGE_BUCKET_NAME")
+#             )
+#             if file_url:
+#                 # user = request.user
+#                 # user.profile_image = file_url
+#                 # user.save()
+#                 return Response(
+#                     {"message": message, "file_url": file_url},
+#                     status=status.HTTP_201_CREATED,
+#                 )
+#         except Exception as e:
+#             return Response(
+#                 {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+#             )
+#         else:
+#             return Response({'error': message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # Create your views here.
