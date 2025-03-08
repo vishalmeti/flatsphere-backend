@@ -64,13 +64,27 @@ class MessageViewSet(
     permission_classes = [IsAuthenticated]  # Or more specific permissions
 
     def get_queryset(self):
-        """
-        Filter messages by conversation ID.
-        """
         queryset = super().get_queryset()
-        conversation_id = self.request.query_params.get("conversation_id")
-        if conversation_id:
-            queryset = queryset.filter(conversation_id=conversation_id)
+        recipient_id = self.request.query_params.get("recipient_id")
+        user = self.request.user
+
+        if recipient_id:
+            try:
+                recipient = User.objects.get(pk=recipient_id)
+            except User.DoesNotExist:
+                return ChatMessage.objects.none()  # Or raise a 404
+
+            # Find the conversation between the current user and the recipient
+            conversation = Conversation.objects.filter(
+                Q(user1=user, user2=recipient) | Q(user1=recipient, user2=user)
+            ).first()
+
+            if conversation:
+                queryset = queryset.filter(conversation=conversation)
+            else:
+                queryset = ChatMessage.objects.none()  # No conversation exists
+
+        # Added additional security, so that user can only see conversations that they are part of.
         queryset = queryset.filter(
             Q(sender=self.request.user)
             | Q(conversation__user1=self.request.user)
