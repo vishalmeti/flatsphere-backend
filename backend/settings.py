@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "workspaces",  # WORKSPACES app
     "media",  # MEDIA app
     "complaints",  # COMPLAINTS app
+    "chat",  # CHAT app
 ]
 
 MIDDLEWARE = [
