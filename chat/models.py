@@ -58,8 +58,9 @@ class ChatMessage(models.Model):
     sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='sent_messages')
     content = models.TextField()  # The message text
     timestamp = models.DateTimeField(auto_now_add=True)
-    is_read = models.BooleanField(default=False)  # Track whether the message has been read
-    documents = GenericRelation(Document)  # Link to the Document model (for file/image uploads)
+    is_read = models.BooleanField(
+        default=False
+    )  # Track whether the message has been read
     is_edited = models.BooleanField(default=False) # To track edit.
     edited_at = models.DateTimeField(null=True, blank=True)
     reply_to = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='replies')
@@ -70,11 +71,11 @@ class ChatMessage(models.Model):
 
     def __str__(self):
         return f"From {self.sender.username} to conversation {self.conversation.id} at {self.timestamp}"
-    
+
     def save(self, *args, **kwargs):
-      if self.pk:
-          original = ChatMessage.objects.get(pk=self.pk)
-          if original.content != self.content:
-              self.is_edited = True
-              self.edited_at = timezone.now()
-      super().save(*args, **kwargs)
+        if self.pk:
+            original = ChatMessage.objects.get(pk=self.pk)
+            if original.content != self.content:
+                self.is_edited = True
+                self.edited_at = timezone.now()
+        super().save(*args, **kwargs)
