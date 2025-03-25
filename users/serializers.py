@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.hashers import make_password
 from media.models import Document
 from django.contrib.contenttypes.models import ContentType
+from workspaces.models import UserWorkspace
 
 from media.helpers import S3Helper
 from decouple import config
@@ -80,6 +81,7 @@ class UserSerializer(serializers.ModelSerializer):
             "first_name",
             "last_name",
             "full_name",
+            "workspace",
         ]
         extra_kwargs = {
             'password': {'write_only': True}  # Ensure password is write-only
@@ -87,6 +89,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     full_name = serializers.SerializerMethodField()
     profile_image_url = serializers.SerializerMethodField()
+    workspace = serializers.SerializerMethodField()
 
     def create(self, validated_data):
         # Hash the password before saving the user
@@ -100,6 +103,11 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_full_name(self, obj):
         return f"{obj.first_name} {obj.last_name}"
+
+    def get_workspace(self, obj):
+        return UserWorkspace.objects.filter(user=obj).values_list(
+            "workspace_id", flat=True
+        )
 
     def get_profile_image_url(self, obj):
         contentType = ContentType.objects.get_for_model(obj)

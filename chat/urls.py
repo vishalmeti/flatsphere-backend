@@ -12,6 +12,11 @@ urlpatterns = [
             }
         ),
     ),
+    # New endpoint to get conversation by recipient ID
+    path(
+        "conversations/recipient/<int:recipient_id>/",
+        views.ConversationViewSet.as_view({"get": "get_by_recipient"}),
+    ),
     path(
         "conversations/<int:pk>/",
         views.ConversationViewSet.as_view({"get": "retrieve", "delete": "destroy"}),

@@ -25,6 +25,7 @@ class WorkspaceSerializer(serializers.ModelSerializer):
 
 class UserWorkspaceSerializer(serializers.ModelSerializer):
     user_email = serializers.EmailField(source="user.email", read_only=True)
+    username = serializers.CharField(source="user.username", read_only=True)
     workspace_name = serializers.CharField(source="workspace.name", read_only=True)
     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
     workspace = serializers.PrimaryKeyRelatedField(queryset=Workspace.objects.all())

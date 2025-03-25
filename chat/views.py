@@ -43,12 +43,36 @@ class ConversationViewSet(
 
     def destroy(self, request, pk=None, *args, **kwargs):
         # return super().destroy(request, *args, **kwargs)
-        import pdb
-
-        pdb.set_trace()
         conversation = get_object_or_404(Conversation, pk=pk)
         conversation.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def get_by_recipient(self, request, recipient_id=None):
+        """
+        Get a conversation by recipient user ID.
+        """
+        user = request.user
+
+        try:
+            recipient = User.objects.get(pk=recipient_id)
+        except User.DoesNotExist:
+            return Response(
+                {"detail": "Recipient not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        conversation = Conversation.objects.filter(
+            Q(user1=user, user2=recipient) | Q(user1=recipient, user2=user)
+        ).first()
+
+        if not conversation:
+            return Response(
+                {"detail": "No conversation found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        serializer = self.get_serializer(conversation)
+        return Response(serializer.data)
 
 
 class MessageViewSet(
@@ -104,9 +128,6 @@ class MessageViewSet(
         reply_to_id = request.data.get("reply_to")  # Get reply_to ID
 
         # Check if an existing conversation ID is provided
-        import pdb
-
-        pdb.set_trace()
         if conversation_id:
             try:
                 conversation = Conversation.objects.get(pk=conversation_id)
