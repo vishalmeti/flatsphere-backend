@@ -85,17 +85,30 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASE_URL = config('DATABASE_URL')
+DATABASE_TYPE = config("DATABASE_TYPE", default="postgresql")
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': DATABASE_URL.split('/')[-1],
-        'USER': DATABASE_URL.split('://')[1].split(':')[0],
-        'PASSWORD': DATABASE_URL.split('://')[1].split(':')[1].split('@')[0],
-        'HOST': DATABASE_URL.split('@')[1].split(':')[0],
-        'PORT': DATABASE_URL.split(':')[-1].split('/')[0],
+if DATABASE_TYPE == "mysql":
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.mysql",
+            "NAME": DATABASE_URL.split("/")[-1],
+            "USER": DATABASE_URL.split("://")[1].split(":")[0],
+            "PASSWORD": DATABASE_URL.split("://")[1].split(":")[1].split("@")[0],
+            "HOST": DATABASE_URL.split("@")[1].split(":")[0],
+            "PORT": DATABASE_URL.split(":")[-1].split("/")[0],
+        }
     }
-}
+else:  # postgresql is the default
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": DATABASE_URL.split("/")[-1],
+            "USER": DATABASE_URL.split("://")[1].split(":")[0],
+            "PASSWORD": DATABASE_URL.split("://")[1].split(":")[1].split("@")[0],
+            "HOST": DATABASE_URL.split("@")[1].split(":")[0],
+            "PORT": DATABASE_URL.split(":")[-1].split("/")[0],
+        }
+    }
 
 # settings.py
 AUTH_USER_MODEL = 'users.User'
@@ -144,7 +157,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # Next.js (development)
-    "https://yourdomain.com",  # Your production frontend URL
+    "https://flatsphere.vercel.app",  # Your production frontend URL
 ]
 
 REST_FRAMEWORK = {
