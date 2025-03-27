@@ -162,11 +162,11 @@ class UserWorkspaceViewSet(
             ):
                 return queryset.none()
 
-            # If user is not admin or owner, can list/retrieve their own records
-            if not (
-                self.request.user.is_superuser or workspace.owner == self.request.user
-            ):
-                queryset = queryset.filter(user=self.request.user)
+            # # If user is not admin or owner, can list/retrieve their own records
+            # if not (
+            #     self.request.user.is_superuser or workspace.owner == self.request.user
+            # ):
+            #     queryset = queryset.filter(user=self.request.user)
 
         return queryset
 
